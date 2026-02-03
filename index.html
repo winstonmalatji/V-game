@@ -10,16 +10,21 @@
     margin: 0;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     background: linear-gradient(180deg, #ff9a9e, #fad0c4);
-    color: #fff;
     text-align: center;
+    color: #fff;
     overflow: hidden;
+  }
+
+  h1 {
+    margin-top: 20px;
+    font-size: 1.8rem;
   }
 
   .screen {
     position: fixed;
     inset: 0;
     display: none;
-    padding: 20px;
+    padding: 30px;
     box-sizing: border-box;
   }
 
@@ -28,34 +33,6 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-  }
-
-  h1, h2 {
-    margin-bottom: 10px;
-  }
-
-  p {
-    font-size: 1.1rem;
-    max-width: 320px;
-  }
-
-  button {
-    margin-top: 20px;
-    padding: 12px 30px;
-    font-size: 1rem;
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-  }
-
-  .primary {
-    background: #ff4d6d;
-    color: #fff;
-  }
-
-  .secondary {
-    background: #eee;
-    color: #333;
   }
 
   #gameArea {
@@ -78,127 +55,116 @@
     font-size: 2rem;
   }
 
-  #hud {
-    margin-top: 10px;
+  #score {
     font-size: 1.2rem;
-  }
-
-  #gif {
     margin-top: 10px;
-    width: 140px;
-    border-radius: 10px;
   }
 
-  #musicToggle {
+  #endScreen {
+    display: none;
     position: fixed;
-    top: 10px;
-    right: 10px;
-    background: rgba(0,0,0,0.3);
-    border-radius: 50%;
-    padding: 10px;
-    font-size: 1.2rem;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    padding: 30px;
+    box-sizing: border-box;
+  }
+
+  #endScreen h2 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+  }
+
+  button {
+    margin-top: 20px;
+    padding: 12px 25px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 25px;
     cursor: pointer;
   }
 
-  .confetti {
-    position: fixed;
-    top: -10px;
-    font-size: 1.5rem;
-    animation: fall 3s linear forwards;
+  .primary {
+    background: #ff4d6d;
+    color: #fff;
   }
 
-  @keyframes fall {
-    to {
-      transform: translateY(110vh) rotate(360deg);
-    }
+  .secondary {
+    background: #ccc;
+    color: #333;
   }
 </style>
 </head>
 
 <body>
 
-<div id="musicToggle">🔊</div>
-<audio id="music" loop>
-  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7b1c9d8df6.mp3" type="audio/mpeg">
-</audio>
-
-<!-- LOADING -->
-<div id="loading" class="screen active">
-  <h1>Hi Londiwe… ❤️</h1>
-  <p>I made something small for you.</p>
-  <p>Give me 5 seconds.</p>
+<!-- GREETING SCREEN -->
+<div id="greeting" class="screen active">
+  <h1>Hi Londiwe ❤️</h1>
+  <p>I made something small and fun for you.</p>
+  <p>I hope it brings a smile to your face.</p>
+  <button class="primary" onclick="showInstructions()">Next</button>
 </div>
 
-<!-- INSTRUCTIONS -->
+<!-- INSTRUCTIONS SCREEN -->
 <div id="instructions" class="screen">
-  <h2>How to play 💘</h2>
+  <h1>How to play 💖</h1>
   <p>Move your finger left and right.</p>
-  <p>Catch 7 hearts.</p>
-  <p>There’s a question waiting at the end.</p>
-  <button class="primary" onclick="startGame()">Let’s go</button>
+  <p>Catch the falling hearts.</p>
+  <p>Catch 7 hearts to finish the game.</p>
+  <button class="primary" onclick="startGame()">Start game</button>
 </div>
 
-<!-- GAME -->
+<!-- GAME SCREEN -->
 <div id="game" class="screen">
-  <div id="hud">Hearts: <span id="score">0</span> / 7</div>
-  <img id="gif" src="https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif">
+  <h1>Catch the hearts 💖</h1>
+  <div id="score">Hearts: 0 / 7</div>
+
   <div id="gameArea">
     <div id="basket">💝</div>
   </div>
 </div>
 
-<!-- END -->
-<div id="end" class="screen">
+<!-- END SCREEN -->
+<div id="endScreen">
   <h2>Londiwe…</h2>
   <p>I enjoyed making this for you.</p>
+  <p>Now I have a question for you...</p>
   <p>Will you be my Valentine? ❤️</p>
-  <button class="primary" onclick="yes()">Yes</button>
-  <button class="secondary" onclick="no()">No</button>
+
+  <button class="primary" onclick="answerYes()">Yes</button>
+  <button class="secondary" onclick="answerNo()">No</button>
 </div>
 
 <script>
-  const screens = {
-    loading: document.getElementById("loading"),
-    instructions: document.getElementById("instructions"),
-    game: document.getElementById("game"),
-    end: document.getElementById("end")
-  };
+  const greeting = document.getElementById("greeting");
+  const instructions = document.getElementById("instructions");
+  const gameScreen = document.getElementById("game");
 
-  const basket = document.getElementById("basket");
   const gameArea = document.getElementById("gameArea");
-  const scoreEl = document.getElementById("score");
-  const gif = document.getElementById("gif");
-  const music = document.getElementById("music");
-  const toggle = document.getElementById("musicToggle");
+  const basket = document.getElementById("basket");
+  const scoreText = document.getElementById("score");
+  const endScreen = document.getElementById("endScreen");
 
+  let basketX = window.innerWidth / 2;
   let score = 0;
+  const target = 7;
   let spawnLoop;
 
-  setTimeout(() => {
-    screens.loading.classList.remove("active");
-    screens.instructions.classList.add("active");
-  }, 5000);
-
-  toggle.onclick = () => {
-    if (music.paused) {
-      music.play();
-      toggle.textContent = "🔊";
-    } else {
-      music.pause();
-      toggle.textContent = "🔇";
-    }
-  };
-
-  document.addEventListener("touchmove", e => {
-    basket.style.left = e.touches[0].clientX + "px";
-  });
+  function showInstructions() {
+    greeting.classList.remove("active");
+    instructions.classList.add("active");
+  }
 
   function startGame() {
-    screens.instructions.classList.remove("active");
-    screens.game.classList.add("active");
-    music.play();
+    instructions.classList.remove("active");
+    gameScreen.classList.add("active");
     spawnLoop = setInterval(dropHeart, 900);
   }
+
+  document.addEventListener("touchmove", e => {
+    basketX = e.touches[0].clientX;
+    basket.style.left = basketX + "px";
+  });
 
   function dropHeart() {
     const heart = document.createElement("div");
@@ -217,17 +183,19 @@
       const h = heart.getBoundingClientRect();
       const b = basket.getBoundingClientRect();
 
-      if (h.bottom > b.top && h.left < b.right && h.right > b.left) {
+      if (
+        h.bottom > b.top &&
+        h.left < b.right &&
+        h.right > b.left
+      ) {
         score++;
-        scoreEl.textContent = score;
+        scoreText.textContent = `Hearts: ${score} / ${target}`;
         heart.remove();
         clearInterval(fall);
 
-        gif.src = score < 7
-          ? "https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif"
-          : gif.src;
-
-        if (score >= 7) endGame();
+        if (score >= target) {
+          endGame();
+        }
       }
 
       if (y > window.innerHeight) {
@@ -239,37 +207,25 @@
 
   function endGame() {
     clearInterval(spawnLoop);
-    screens.game.classList.remove("active");
-    screens.end.classList.add("active");
+    setTimeout(() => {
+      endScreen.style.display = "block";
+    }, 500);
   }
 
-  function yes() {
-    screens.end.innerHTML = `
+  function answerYes() {
+    endScreen.innerHTML = `
       <h2>❤️</h2>
       <p>You just made my day.</p>
       <p>Happy Valentine’s Day, Londiwe.</p>
-      <p>– Winston</p>
     `;
-    confetti();
   }
 
-  function no() {
-    screens.end.innerHTML = `
+  function answerNo() {
+    endScreen.innerHTML = `
       <h2>🌸</h2>
       <p>Thank you for playing.</p>
       <p>I still appreciate you.</p>
     `;
-  }
-
-  function confetti() {
-    for (let i = 0; i < 40; i++) {
-      const c = document.createElement("div");
-      c.className = "confetti";
-      c.textContent = "💖";
-      c.style.left = Math.random() * 100 + "vw";
-      document.body.appendChild(c);
-      setTimeout(() => c.remove(), 3000);
-    }
   }
 </script>
 
