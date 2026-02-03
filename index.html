@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Londiwe ❤️</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(180deg, #ff9a9e, #fad0c4);
+    color: #fff;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: none;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .screen.active {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  h1, h2 {
+    margin-bottom: 10px;
+  }
+
+  p {
+    font-size: 1.1rem;
+    max-width: 320px;
+  }
+
+  button {
+    margin-top: 20px;
+    padding: 12px 30px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+  }
+
+  .primary {
+    background: #ff4d6d;
+    color: #fff;
+  }
+
+  .secondary {
+    background: #eee;
+    color: #333;
+  }
+
+  #gameArea {
+    position: relative;
+    width: 100%;
+    height: 65vh;
+  }
+
+  #basket {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3rem;
+  }
+
+  .heart {
+    position: absolute;
+    top: -40px;
+    font-size: 2rem;
+  }
+
+  #hud {
+    margin-top: 10px;
+    font-size: 1.2rem;
+  }
+
+  #gif {
+    margin-top: 10px;
+    width: 140px;
+    border-radius: 10px;
+  }
+
+  #musicToggle {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 50%;
+    padding: 10px;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+
+  .confetti {
+    position: fixed;
+    top: -10px;
+    font-size: 1.5rem;
+    animation: fall 3s linear forwards;
+  }
+
+  @keyframes fall {
+    to {
+      transform: translateY(110vh) rotate(360deg);
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div id="musicToggle">🔊</div>
+<audio id="music" loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7b1c9d8df6.mp3" type="audio/mpeg">
+</audio>
+
+<!-- LOADING -->
+<div id="loading" class="screen active">
+  <h1>Hi Londiwe… ❤️</h1>
+  <p>I made something small for you.</p>
+  <p>Give me 5 seconds.</p>
+</div>
+
+<!-- INSTRUCTIONS -->
+<div id="instructions" class="screen">
+  <h2>How to play 💘</h2>
+  <p>Move your finger left and right.</p>
+  <p>Catch 7 hearts.</p>
+  <p>There’s a question waiting at the end.</p>
+  <button class="primary" onclick="startGame()">Let’s go</button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div id="hud">Hearts: <span id="score">0</span> / 7</div>
+  <img id="gif" src="https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif">
+  <div id="gameArea">
+    <div id="basket">💝</div>
+  </div>
+</div>
+
+<!-- END -->
+<div id="end" class="screen">
+  <h2>Londiwe…</h2>
+  <p>I enjoyed making this for you.</p>
+  <p>Will you be my Valentine? ❤️</p>
+  <button class="primary" onclick="yes()">Yes</button>
+  <button class="secondary" onclick="no()">No</button>
+</div>
+
+<script>
+  const screens = {
+    loading: document.getElementById("loading"),
+    instructions: document.getElementById("instructions"),
+    game: document.getElementById("game"),
+    end: document.getElementById("end")
+  };
+
+  const basket = document.getElementById("basket");
+  const gameArea = document.getElementById("gameArea");
+  const scoreEl = document.getElementById("score");
+  const gif = document.getElementById("gif");
+  const music = document.getElementById("music");
+  const toggle = document.getElementById("musicToggle");
+
+  let score = 0;
+  let spawnLoop;
+
+  setTimeout(() => {
+    screens.loading.classList.remove("active");
+    screens.instructions.classList.add("active");
+  }, 5000);
+
+  toggle.onclick = () => {
+    if (music.paused) {
+      music.play();
+      toggle.textContent = "🔊";
+    } else {
+      music.pause();
+      toggle.textContent = "🔇";
+    }
+  };
+
+  document.addEventListener("touchmove", e => {
+    basket.style.left = e.touches[0].clientX + "px";
+  });
+
+  function startGame() {
+    screens.instructions.classList.remove("active");
+    screens.game.classList.add("active");
+    music.play();
+    spawnLoop = setInterval(dropHeart, 900);
+  }
+
+  function dropHeart() {
+    const heart = document.createElement("div");
+    heart.className = "heart";
+    heart.textContent = "❤️";
+    heart.style.left = Math.random() * (window.innerWidth - 30) + "px";
+    gameArea.appendChild(heart);
+
+    let y = -40;
+    const speed = 2 + Math.random() * 2;
+
+    const fall = setInterval(() => {
+      y += speed;
+      heart.style.top = y + "px";
+
+      const h = heart.getBoundingClientRect();
+      const b = basket.getBoundingClientRect();
+
+      if (h.bottom > b.top && h.left < b.right && h.right > b.left) {
+        score++;
+        scoreEl.textContent = score;
+        heart.remove();
+        clearInterval(fall);
+
+        gif.src = score < 7
+          ? "https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif"
+          : gif.src;
+
+        if (score >= 7) endGame();
+      }
+
+      if (y > window.innerHeight) {
+        heart.remove();
+        clearInterval(fall);
+      }
+    }, 16);
+  }
+
+  function endGame() {
+    clearInterval(spawnLoop);
+    screens.game.classList.remove("active");
+    screens.end.classList.add("active");
+  }
+
+  function yes() {
+    screens.end.innerHTML = `
+      <h2>❤️</h2>
+      <p>You just made my day.</p>
+      <p>Happy Valentine’s Day, Londiwe.</p>
+      <p>– Winston</p>
+    `;
+    confetti();
+  }
+
+  function no() {
+    screens.end.innerHTML = `
+      <h2>🌸</h2>
+      <p>Thank you for playing.</p>
+      <p>I still appreciate you.</p>
+    `;
+  }
+
+  function confetti() {
+    for (let i = 0; i < 40; i++) {
+      const c = document.createElement("div");
+      c.className = "confetti";
+      c.textContent = "💖";
+      c.style.left = Math.random() * 100 + "vw";
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 3000);
+    }
+  }
+</script>
+
+</body>
+</html>
