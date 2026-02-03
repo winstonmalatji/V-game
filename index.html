@@ -33,10 +33,17 @@
     z-index: 10;
   }
 
+  #gameAreaWrapper {
+    display: none;
+    width: 100%;
+    height: 100%;
+  }
+
   #gameArea {
     position: relative;
     width: 100%;
     height: 65vh;
+    margin-top: 20px;
   }
 
   #basket {
@@ -109,7 +116,6 @@
   }
 </style>
 </head>
-
 <body>
 
 <!-- GREETING PAGE -->
@@ -129,12 +135,13 @@
   <button class="primary" onclick="startGame()">Start game</button>
 </div>
 
-<!-- GAME -->
-<h1>Catch the hearts 💖</h1>
-<div id="score">Hearts: 0 / 7</div>
-
-<div id="gameArea">
-  <div id="basket">💝</div>
+<!-- GAME PAGE -->
+<div id="gameAreaWrapper">
+  <h1>Catch the hearts 💖</h1>
+  <div id="score">Hearts: 0 / 7</div>
+  <div id="gameArea">
+    <div id="basket">💝</div>
+  </div>
 </div>
 
 <!-- END SCREEN -->
@@ -149,7 +156,7 @@
 <script>
   const greeting = document.getElementById("greeting");
   const instructions = document.getElementById("instructions");
-
+  const gameAreaWrapper = document.getElementById("gameAreaWrapper");
   const gameArea = document.getElementById("gameArea");
   const basket = document.getElementById("basket");
   const scoreText = document.getElementById("score");
@@ -163,6 +170,7 @@
   const target = 7;
   let spawnLoop;
 
+  // --- FLOW FUNCTIONS ---
   function showInstructions() {
     greeting.style.display = "none";
     instructions.style.display = "flex";
@@ -170,10 +178,11 @@
 
   function startGame() {
     instructions.style.display = "none";
+    gameAreaWrapper.style.display = "block";
     spawnLoop = setInterval(dropHeart, 900);
   }
 
-  // Touch movement
+  // --- GAME LOGIC ---
   document.addEventListener("touchmove", e => {
     basketX = e.touches[0].clientX;
     basket.style.left = basketX + "px";
@@ -196,11 +205,7 @@
       const h = heart.getBoundingClientRect();
       const b = basket.getBoundingClientRect();
 
-      if (
-        h.bottom > b.top &&
-        h.left < b.right &&
-        h.right > b.left
-      ) {
+      if (h.bottom > b.top && h.left < b.right && h.right > b.left) {
         score++;
         scoreText.textContent = `Hearts: ${score} / ${target}`;
         heart.remove();
@@ -220,16 +225,13 @@
 
   function endGame() {
     clearInterval(spawnLoop);
-    setTimeout(() => {
-      endScreen.style.display = "flex";
-    }, 500);
+    endScreen.style.display = "flex";
   }
 
   function answerYes() {
     endTitle.textContent = "❤️";
     endMessage.textContent = "You just made my day.";
     endQuestion.textContent = "Happy Valentine’s Day, Londiwe.";
-    endScreen.style.display = "flex";
     launchConfetti();
   }
 
@@ -237,10 +239,9 @@
     endTitle.textContent = "🌸";
     endMessage.textContent = "Thank you for playing.";
     endQuestion.textContent = "I still appreciate you.";
-    endScreen.style.display = "flex";
   }
 
-  // Confetti hearts function
+  // --- CONFETTI ---
   function launchConfetti() {
     for (let i = 0; i < 40; i++) {
       const c = document.createElement("div");
@@ -253,7 +254,6 @@
       c.style.zIndex = 30;
       document.body.appendChild(c);
 
-      // Animate falling
       let y = -20;
       const speed = 2 + Math.random() * 3;
       const fall = setInterval(() => {
@@ -267,6 +267,5 @@
     }
   }
 </script>
-
 </body>
 </html>
