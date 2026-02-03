@@ -66,6 +66,11 @@
     padding: 30px;
     box-sizing: border-box;
     z-index: 20;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
   }
 
   #endScreen h2 {
@@ -128,7 +133,7 @@
 
 <div id="endScreen">
   <h2>Londiwe…</h2>
-  <p>I enjoyed making this for you.</p>
+  <p>I enjoyed making this for you and I hope you had fun playing it.</p>
   <p>Now I have a question for you...</p>
   <p>Will you be my Valentine? ❤️</p>
 
@@ -208,7 +213,7 @@
   function endGame() {
     clearInterval(spawnLoop);
     setTimeout(() => {
-      endScreen.style.display = "block";
+      endScreen.style.display = "flex";
     }, 500);
   }
 
@@ -218,6 +223,8 @@
       <p>You just made my day.</p>
       <p>Happy Valentine’s Day, Londiwe.</p>
     `;
+    endScreen.style.display = "flex"; // keep centered
+    launchConfetti();
   }
 
   function answerNo() {
@@ -226,6 +233,34 @@
       <p>Thank you for playing.</p>
       <p>I still appreciate you.</p>
     `;
+    endScreen.style.display = "flex"; // keep centered
+  }
+
+  // Confetti hearts function
+  function launchConfetti() {
+    for (let i = 0; i < 40; i++) {
+      const c = document.createElement("div");
+      c.className = "heart";
+      c.textContent = "💖";
+      c.style.position = "fixed";
+      c.style.left = Math.random() * 100 + "vw";
+      c.style.top = "-20px";
+      c.style.fontSize = (Math.random() * 24 + 16) + "px";
+      c.style.zIndex = 30;
+      document.body.appendChild(c);
+
+      // Animate falling
+      let y = -20;
+      const speed = 2 + Math.random() * 3;
+      const fall = setInterval(() => {
+        y += speed;
+        c.style.top = y + "px";
+        if (y > window.innerHeight) {
+          c.remove();
+          clearInterval(fall);
+        }
+      }, 16);
+    }
   }
 </script>
 
