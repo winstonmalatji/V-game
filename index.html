@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>For Londiwe ❤️</title>
 
 <style>
   body {
     margin: 0;
     font-family: system-ui, -apple-system, sans-serif;
-    background: #ff9a9e; 
-    overflow: hidden; /* No scrolling allowed */
-    touch-action: none; /* Disables standard browser gestures */
+    background: #ff9a9e;
+    overflow: hidden;
+    touch-action: none;
     -webkit-user-select: none;
     user-select: none;
     width: 100vw;
@@ -19,13 +19,12 @@
     height: 100dvh;
   }
 
-  /* --- SCREEN MANAGEMENT --- */
   .screen {
     position: fixed;
     inset: 0;
     width: 100%;
     height: 100%;
-    display: none; /* Hidden by default */
+    display: none;
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -35,11 +34,9 @@
     box-sizing: border-box;
   }
 
-  /* These classes force the screen to show */
   .visible-flex { display: flex !important; }
   .visible-block { display: block !important; }
 
-  /* --- TEXT STYLES --- */
   h1 {
     font-size: 2rem;
     margin-bottom: 20px;
@@ -57,7 +54,6 @@
     max-width: 90%;
   }
 
-  /* --- GAME ELEMENTS --- */
   #score {
     position: absolute;
     top: max(20px, env(safe-area-inset-top));
@@ -68,7 +64,7 @@
     font-weight: bold;
     color: #fff;
     z-index: 5;
-    pointer-events: none; /* Lets touches pass through */
+    pointer-events: none;
   }
 
   #basket {
@@ -79,7 +75,9 @@
     font-size: 4.5rem;
     line-height: 1;
     z-index: 5;
-    pointer-events: none; /* Lets touches pass through so you can drag anywhere */
+    /* allow pointer events so its bounding box is correct */
+    pointer-events: auto;
+    touch-action: none;
   }
 
   .heart {
@@ -90,7 +88,6 @@
     pointer-events: none;
   }
 
-  /* --- END SCREEN --- */
   #screen-end {
     background: rgba(0,0,0,0.9);
     z-index: 100;
@@ -102,7 +99,6 @@
     margin-bottom: 20px;
   }
 
-  /* --- BUTTONS --- */
   button {
     margin-top: 25px;
     padding: 15px 40px;
@@ -114,15 +110,19 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  
+
   button:active { transform: scale(0.95); }
 
   .primary { background: #fff; color: #ff9a9e; }
   .yes { background: #ff4d6d; color: #fff; margin: 10px; }
   .no { background: #fff; color: #333; margin: 10px; }
-  
+
   .btn-group { display: flex; gap: 10px; }
 
+  /* ensure the game screen doesn't allow browser gestures (so pointermove works) */
+  #screen-game {
+    touch-action: none;
+  }
 </style>
 </head>
 <body>
@@ -157,24 +157,20 @@
 </div>
 
 <script>
-  // --- VARIABLES ---
   let score = 0;
   const target = 7;
   let spawnLoop;
   let activeHearts = [];
   const basket = document.getElementById("basket");
   const scoreText = document.getElementById("score");
-  let gameRunning = false; // New flag to track game state safely
+  let gameRunning = false;
 
-  // --- SCREEN MANAGER ---
   function switchScreen(screenId, displayType = 'flex') {
-    // Hide all screens
     document.querySelectorAll('.screen').forEach(s => {
       s.classList.remove('visible-flex');
       s.classList.remove('visible-block');
     });
 
-    // Show target screen
     const targetScreen = document.getElementById(screenId);
     if (displayType === 'flex') {
       targetScreen.classList.add('visible-flex');
@@ -183,13 +179,14 @@
     }
   }
 
-  // --- NAVIGATION ---
   function goToInstructions() {
     switchScreen('screen-instructions');
   }
 
   function goToGame() {
     switchScreen('screen-game', 'block');
+    // center basket horizontally at start
+    basket.style.left = (window.innerWidth / 2) + "px";
     startGameLogic();
   }
 
@@ -204,54 +201,40 @@
     switchScreen('screen-end');
   }
 
-  // --- GAME LOGIC ---
   function startGameLogic() {
     score = 0;
-    scoreText.textContent = "0 / 7";
+    scoreText.textContent = `0 / ${target}`;
     gameRunning = true;
-    
-    // Start Spawning
     spawnLoop = setInterval(createHeart, 800);
   }
 
-  // --- TOUCH CONTROLS (FIXED) ---
-  // We attach the listener to the whole window to ensure we catch every movement
-  window.addEventListener("touchmove", function(e) {
-    if (!gameRunning) return; // Only move if game is actually running
-    
-    e.preventDefault(); // Stop scrolling
-    
-    let touch = e.touches[0];
-    let x = touch.clientX;
-    
-    // Keep basket inside screen
-    if(x < 0) x = 0;
-    if(x > window.innerWidth) x = window.innerWidth;
-    
-    basket.style.left = x + "px";
-  }, { passive: false });
-
-  // Also add touchstart to prevent default scrolling behavior immediately
-  window.addEventListener("touchstart", function(e) {
-    if (gameRunning) {
-        e.preventDefault();
-    }
-  }, { passive: false });
-
-  // Mouse Controls (for testing on PC)
-  window.addEventListener("mousemove", function(e) {
+  // Use pointer events (works for mouse, touch, pen)
+  window.addEventListener("pointermove", function(e) {
     if (!gameRunning) return;
-    basket.style.left = e.clientX + "px";
+    // Only handle primary pointer to avoid multitouch conflicts
+    if (!e.isPrimary) return;
+
+    let x = e.clientX;
+    // keep inside viewport
+    x = Math.max(0, Math.min(window.innerWidth, x));
+    basket.style.left = x + "px";
   });
 
+  // Also prevent default on pointerdown inside the game screen so the browser doesn't try to scroll
+  document.getElementById('screen-game').addEventListener('pointerdown', function(e) {
+    if (gameRunning) e.preventDefault();
+  }, { passive: false });
+
   function createHeart() {
+    const container = document.getElementById('screen-game');
     const heart = document.createElement("div");
     heart.className = "heart";
     heart.textContent = "❤️";
+    // ensure we don't place hearts off-screen to the right
     heart.style.left = Math.random() * (window.innerWidth - 50) + "px";
-    document.getElementById('screen-game').appendChild(heart);
+    container.appendChild(heart);
 
-    let y = -50;
+    let y = -60;
     const speed = 4 + Math.random() * 3;
 
     const fall = setInterval(() => {
@@ -263,23 +246,24 @@
       const bRect = basket.getBoundingClientRect();
 
       if (
-        hRect.bottom > bRect.top + 15 &&
+        hRect.bottom > bRect.top + 10 &&
         hRect.top < bRect.bottom &&
         hRect.right > bRect.left &&
         hRect.left < bRect.right
       ) {
         score++;
         scoreText.textContent = `${score} / ${target}`;
-        
+
         heart.remove();
         clearInterval(fall);
-        
+
         if (score >= target) {
           goToEnd();
         }
       }
 
-      if (y > window.innerHeight) {
+      if (y > window.innerHeight + 50) {
+        // remove when off-screen
         heart.remove();
         clearInterval(fall);
       }
@@ -288,7 +272,6 @@
     activeHearts.push({ element: heart, interval: fall });
   }
 
-  // --- FINAL ANSWER ---
   function answerYes() {
     document.getElementById('endTitle').textContent = "Yay! ❤️";
     document.getElementById('endMessage').textContent = "You just made my day.";
@@ -320,7 +303,7 @@
       const fall = setInterval(() => {
         y += speed;
         c.style.top = y + "px";
-        if (y > window.innerHeight) {
+        if (y > window.innerHeight + 50) {
           c.remove();
           clearInterval(fall);
         }
