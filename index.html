@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>For Londiwe ❤️</title>
 
 <style>
@@ -12,12 +12,14 @@
     background: linear-gradient(180deg, #ff9a9e, #fad0c4);
     text-align: center;
     color: #fff;
-    overflow: hidden;
+    overflow: hidden; /* Prevents scrolling */
+    touch-action: none; /* Disables double-tap zoom on some devices */
   }
 
   h1 {
     margin-top: 20px;
     font-size: 1.8rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
 
   .overlay {
@@ -42,7 +44,7 @@
   #gameArea {
     position: relative;
     width: 100%;
-    height: 65vh;
+    height: 75vh; /* Increased height slightly */
     margin-top: 20px;
   }
 
@@ -51,17 +53,20 @@
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 3rem;
+    font-size: 4rem; /* Made basket slightly bigger */
+    user-select: none;
   }
 
   .heart {
     position: absolute;
     top: -40px;
     font-size: 2rem;
+    user-select: none;
   }
 
   #score {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+    font-weight: bold;
     margin-top: 10px;
   }
 
@@ -69,11 +74,10 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.85); /* Darker for better text contrast */
     padding: 30px;
     box-sizing: border-box;
     z-index: 20;
-    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -82,22 +86,38 @@
   }
 
   #endScreen h2 {
-    font-size: 2rem;
+    font-size: 2.5rem;
     margin-bottom: 20px;
+    color: #ff9a9e;
   }
 
   #endScreen p {
-    font-size: 1.2rem;
-    margin: 5px 0;
+    font-size: 1.3rem;
+    margin: 10px 0;
+    line-height: 1.5;
+  }
+
+  .btn-container {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   button {
-    margin: 10px;
-    padding: 12px 25px;
-    font-size: 1rem;
+    padding: 15px 30px;
+    font-size: 1.1rem;
     border: none;
-    border-radius: 25px;
+    border-radius: 50px;
     cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  button:active {
+    transform: scale(0.95);
   }
 
   .yes {
@@ -106,19 +126,19 @@
   }
 
   .no {
-    background: #ccc;
+    background: #fff;
     color: #333;
   }
 
   .primary {
-    background: #ff4d6d;
-    color: #fff;
+    background: #fff;
+    color: #ff9a9e;
+    margin-top: 20px;
   }
 </style>
 </head>
 <body>
 
-<!-- GREETING PAGE -->
 <div id="greeting" class="overlay">
   <h1>Hi Londiwe ❤️</h1>
   <p>I made something small and fun for you.</p>
@@ -126,34 +146,33 @@
   <button class="primary" onclick="showInstructions()">Next</button>
 </div>
 
-<!-- INSTRUCTIONS PAGE -->
 <div id="instructions" class="overlay" style="display:none;">
   <h1>How to play 💖</h1>
-  <p>Move your finger left and right.</p>
+  <p>Drag your finger (or mouse) left and right.</p>
   <p>Catch the falling hearts.</p>
-  <p>Catch 7 hearts to finish.</p>
-  <button class="primary" onclick="startGame()">Start game</button>
+  <p>Collect 7 hearts to finish.</p>
+  <button class="primary" onclick="startGame()">Start Game</button>
 </div>
 
-<!-- GAME PAGE -->
 <div id="gameAreaWrapper">
-  <h1>Catch the hearts 💖</h1>
   <div id="score">Hearts: 0 / 7</div>
   <div id="gameArea">
     <div id="basket">💝</div>
   </div>
 </div>
 
-<!-- END SCREEN -->
 <div id="endScreen">
   <h2 id="endTitle">Londiwe…</h2>
   <p id="endMessage">I enjoyed making this for you.</p>
   <p id="endQuestion">Will you be my Valentine? ❤️</p>
-  <button class="yes" onclick="answerYes()">Yes</button>
-  <button class="no" onclick="answerNo()">No</button>
+  <div class="btn-container" id="responseButtons">
+    <button class="yes" onclick="answerYes()">YES</button>
+    <button class="no" onclick="answerNo()">NO</button>
+  </div>
 </div>
 
 <script>
+  // DOM Elements
   const greeting = document.getElementById("greeting");
   const instructions = document.getElementById("instructions");
   const gameAreaWrapper = document.getElementById("gameAreaWrapper");
@@ -164,11 +183,14 @@
   const endTitle = document.getElementById("endTitle");
   const endMessage = document.getElementById("endMessage");
   const endQuestion = document.getElementById("endQuestion");
+  const responseButtons = document.getElementById("responseButtons");
 
+  // Game Variables
   let basketX = window.innerWidth / 2;
   let score = 0;
   const target = 7;
   let spawnLoop;
+  let activeHearts = []; // Track active intervals to clean them up
 
   // --- FLOW FUNCTIONS ---
   function showInstructions() {
@@ -179,33 +201,54 @@
   function startGame() {
     instructions.style.display = "none";
     gameAreaWrapper.style.display = "block";
-    spawnLoop = setInterval(dropHeart, 900);
+    spawnLoop = setInterval(dropHeart, 800); // Slightly faster spawn
   }
 
-  // --- GAME LOGIC ---
-  document.addEventListener("touchmove", e => {
-    basketX = e.touches[0].clientX;
+  // --- INPUT HANDLING (Fixed for Mobile & PC) ---
+  function moveBasket(clientX) {
+    basketX = clientX;
+    // Boundary checks to keep basket on screen
+    if (basketX < 0) basketX = 0;
+    if (basketX > window.innerWidth) basketX = window.innerWidth;
     basket.style.left = basketX + "px";
+  }
+
+  // Touch Support
+  document.addEventListener("touchmove", e => {
+    e.preventDefault(); // Prevents screen scrolling while playing
+    moveBasket(e.touches[0].clientX);
+  }, { passive: false });
+
+  // Mouse Support (For Desktop)
+  document.addEventListener("mousemove", e => {
+    moveBasket(e.clientX);
   });
 
+  // --- GAME LOGIC ---
   function dropHeart() {
     const heart = document.createElement("div");
     heart.className = "heart";
     heart.textContent = "❤️";
-    heart.style.left = Math.random() * (window.innerWidth - 30) + "px";
+    heart.style.left = Math.random() * (window.innerWidth - 40) + "px";
     gameArea.appendChild(heart);
 
     let y = -40;
-    const speed = 2 + Math.random() * 2;
+    const speed = 3 + Math.random() * 3; // Slightly varied speed
 
     const fall = setInterval(() => {
       y += speed;
       heart.style.top = y + "px";
 
-      const h = heart.getBoundingClientRect();
-      const b = basket.getBoundingClientRect();
+      const hRect = heart.getBoundingClientRect();
+      const bRect = basket.getBoundingClientRect();
 
-      if (h.bottom > b.top && h.left < b.right && h.right > b.left) {
+      // Collision Detection
+      if (
+        hRect.bottom > bRect.top &&
+        hRect.top < bRect.bottom &&
+        hRect.right > bRect.left &&
+        hRect.left < bRect.right
+      ) {
         score++;
         scoreText.textContent = `Hearts: ${score} / ${target}`;
         heart.remove();
@@ -216,49 +259,64 @@
         }
       }
 
+      // Remove if falls off screen
       if (y > window.innerHeight) {
         heart.remove();
         clearInterval(fall);
       }
     }, 16);
+    
+    activeHearts.push(fall);
   }
 
   function endGame() {
     clearInterval(spawnLoop);
+    
+    // Clean up all falling hearts instantly
+    activeHearts.forEach(clearInterval);
+    document.querySelectorAll('.heart').forEach(h => h.remove());
+
     endScreen.style.display = "flex";
   }
 
+  // --- END SCREEN LOGIC ---
   function answerYes() {
-    endTitle.textContent = "❤️";
+    endTitle.textContent = "Yay! ❤️";
     endMessage.textContent = "You just made my day.";
     endQuestion.textContent = "Happy Valentine’s Day, Londiwe.";
+    responseButtons.style.display = "none"; // Hide buttons after choice
     launchConfetti();
   }
 
   function answerNo() {
-    endTitle.textContent = "🌸";
-    endMessage.textContent = "Thank you for playing.";
+    endTitle.textContent = "Aw, okay 🌸";
+    endMessage.textContent = "Thank you for playing anyway.";
     endQuestion.textContent = "I still appreciate you.";
+    responseButtons.style.display = "none"; // Hide buttons after choice
   }
 
   // --- CONFETTI ---
   function launchConfetti() {
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 50; i++) {
       const c = document.createElement("div");
-      c.className = "heart";
       c.textContent = "💖";
       c.style.position = "fixed";
       c.style.left = Math.random() * 100 + "vw";
       c.style.top = "-20px";
       c.style.fontSize = (Math.random() * 24 + 16) + "px";
-      c.style.zIndex = 30;
+      c.style.zIndex = "30";
       document.body.appendChild(c);
 
       let y = -20;
+      let x = Math.random() * 100;
       const speed = 2 + Math.random() * 3;
+      const wobble = (Math.random() - 0.5) * 2;
+
       const fall = setInterval(() => {
         y += speed;
+        x += wobble;
         c.style.top = y + "px";
+        c.style.left = x + "vw";
         if (y > window.innerHeight) {
           c.remove();
           clearInterval(fall);
