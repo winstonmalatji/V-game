@@ -9,24 +9,23 @@
   body {
     margin: 0;
     font-family: system-ui, -apple-system, sans-serif;
-    background: #ff9a9e; /* Fallback color */
-    overflow: hidden;
-    touch-action: none; /* Prevents scroll/zoom on mobile */
+    background: #ff9a9e; 
+    overflow: hidden; /* No scrolling allowed */
+    touch-action: none; /* Disables standard browser gestures */
     -webkit-user-select: none;
     user-select: none;
     width: 100vw;
     height: 100vh;
-    height: 100dvh; /* Mobile viewport fix */
+    height: 100dvh;
   }
 
   /* --- SCREEN MANAGEMENT --- */
-  /* By default, all screens are hidden. We show them one by one via JS. */
   .screen {
     position: fixed;
     inset: 0;
     width: 100%;
     height: 100%;
-    display: none; /* HIDDEN BY DEFAULT */
+    display: none; /* Hidden by default */
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -36,21 +35,17 @@
     box-sizing: border-box;
   }
 
-  /* We need a specific class to make a screen visible */
-  .visible-flex {
-    display: flex !important;
-  }
-  
-  .visible-block {
-    display: block !important;
-  }
+  /* These classes force the screen to show */
+  .visible-flex { display: flex !important; }
+  .visible-block { display: block !important; }
 
-  /* --- TYPOGRAPHY --- */
+  /* --- TEXT STYLES --- */
   h1 {
     font-size: 2rem;
     margin-bottom: 20px;
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     color: #fff;
+    text-align: center;
   }
 
   p {
@@ -58,15 +53,11 @@
     color: #fff;
     margin: 10px 0;
     line-height: 1.5;
+    text-align: center;
     max-width: 90%;
   }
 
-  /* --- GAME ASSETS --- */
-  #gameAreaWrapper {
-    /* The game wrapper is a screen too, but needs display:block for positioning */
-    background: linear-gradient(180deg, #ff9a9e, #fad0c4);
-  }
-
+  /* --- GAME ELEMENTS --- */
   #score {
     position: absolute;
     top: max(20px, env(safe-area-inset-top));
@@ -77,6 +68,7 @@
     font-weight: bold;
     color: #fff;
     z-index: 5;
+    pointer-events: none; /* Lets touches pass through */
   }
 
   #basket {
@@ -87,6 +79,7 @@
     font-size: 4.5rem;
     line-height: 1;
     z-index: 5;
+    pointer-events: none; /* Lets touches pass through so you can drag anywhere */
   }
 
   .heart {
@@ -94,15 +87,16 @@
     top: -50px;
     font-size: 2.5rem;
     z-index: 4;
+    pointer-events: none;
   }
 
-  /* --- END SCREEN SPECIFICS --- */
-  #endScreen {
-    background: rgba(0,0,0,0.9); /* Dark overlay */
-    z-index: 100; /* Ensure it sits on top of everything */
+  /* --- END SCREEN --- */
+  #screen-end {
+    background: rgba(0,0,0,0.9);
+    z-index: 100;
   }
 
-  #endScreen h2 {
+  #screen-end h2 {
     font-size: 2.5rem;
     color: #ff9a9e;
     margin-bottom: 20px;
@@ -141,13 +135,13 @@
 
 <div id="screen-instructions" class="screen">
   <h1>How to play</h1>
-  <p>1. Drag your finger left & right.</p>
+  <p>1. Drag your finger anywhere left & right.</p>
   <p>2. Catch the falling hearts.</p>
   <p>3. Collect 7 hearts to win.</p>
   <button class="primary" onclick="goToGame()">Start</button>
 </div>
 
-<div id="screen-game" class="screen" style="display: none;">
+<div id="screen-game" class="screen">
   <div id="score">0 / 7</div>
   <div id="basket">💝</div>
 </div>
@@ -170,18 +164,17 @@
   let activeHearts = [];
   const basket = document.getElementById("basket");
   const scoreText = document.getElementById("score");
+  let gameRunning = false; // New flag to track game state safely
 
-  // --- SCREEN MANAGER SYSTEM ---
-  // This function guarantees only ONE screen is open at a time
+  // --- SCREEN MANAGER ---
   function switchScreen(screenId, displayType = 'flex') {
-    // 1. Hide ALL screens
+    // Hide all screens
     document.querySelectorAll('.screen').forEach(s => {
       s.classList.remove('visible-flex');
       s.classList.remove('visible-block');
-      s.style.display = 'none'; // Force hide
     });
 
-    // 2. Show the TARGET screen
+    // Show target screen
     const targetScreen = document.getElementById(screenId);
     if (displayType === 'flex') {
       targetScreen.classList.add('visible-flex');
@@ -190,25 +183,24 @@
     }
   }
 
-  // --- NAVIGATION FUNCTIONS ---
+  // --- NAVIGATION ---
   function goToInstructions() {
     switchScreen('screen-instructions');
   }
 
   function goToGame() {
-    switchScreen('screen-game', 'block'); // Game needs 'block' positioning
+    switchScreen('screen-game', 'block');
     startGameLogic();
   }
 
   function goToEnd() {
-    // Clean up game before showing end screen
+    gameRunning = false;
     clearInterval(spawnLoop);
     activeHearts.forEach(h => {
         h.element.remove();
         clearInterval(h.interval);
     });
     activeHearts = [];
-    
     switchScreen('screen-end');
   }
 
@@ -216,29 +208,39 @@
   function startGameLogic() {
     score = 0;
     scoreText.textContent = "0 / 7";
+    gameRunning = true;
     
-    // Start Spawning Hearts
+    // Start Spawning
     spawnLoop = setInterval(createHeart, 800);
   }
 
-  // Touch Controls
-  document.addEventListener("touchmove", function(e) {
-    // Only move basket if the game screen is actually visible
-    if(document.getElementById('screen-game').style.display === 'none') return;
-
-    e.preventDefault(); 
+  // --- TOUCH CONTROLS (FIXED) ---
+  // We attach the listener to the whole window to ensure we catch every movement
+  window.addEventListener("touchmove", function(e) {
+    if (!gameRunning) return; // Only move if game is actually running
+    
+    e.preventDefault(); // Stop scrolling
+    
     let touch = e.touches[0];
     let x = touch.clientX;
     
+    // Keep basket inside screen
     if(x < 0) x = 0;
     if(x > window.innerWidth) x = window.innerWidth;
     
     basket.style.left = x + "px";
   }, { passive: false });
 
-  // Mouse Controls (Just in case)
-  document.addEventListener("mousemove", function(e) {
-    if(document.getElementById('screen-game').style.display === 'none') return;
+  // Also add touchstart to prevent default scrolling behavior immediately
+  window.addEventListener("touchstart", function(e) {
+    if (gameRunning) {
+        e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Mouse Controls (for testing on PC)
+  window.addEventListener("mousemove", function(e) {
+    if (!gameRunning) return;
     basket.style.left = e.clientX + "px";
   });
 
@@ -269,7 +271,6 @@
         score++;
         scoreText.textContent = `${score} / ${target}`;
         
-        // Remove heart
         heart.remove();
         clearInterval(fall);
         
@@ -278,7 +279,6 @@
         }
       }
 
-      // Missed heart
       if (y > window.innerHeight) {
         heart.remove();
         clearInterval(fall);
