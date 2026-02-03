@@ -20,19 +20,17 @@
     font-size: 1.8rem;
   }
 
-  .screen {
+  .overlay {
     position: fixed;
     inset: 0;
-    display: none;
-    padding: 30px;
-    box-sizing: border-box;
-  }
-
-  .screen.active {
+    background: linear-gradient(180deg, #ff9a9e, #fad0c4);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    padding: 30px;
+    box-sizing: border-box;
+    z-index: 10;
   }
 
   #gameArea {
@@ -67,6 +65,7 @@
     background: rgba(0,0,0,0.7);
     padding: 30px;
     box-sizing: border-box;
+    z-index: 20;
   }
 
   #endScreen h2 {
@@ -75,7 +74,7 @@
   }
 
   button {
-    margin-top: 20px;
+    margin: 10px;
     padding: 12px 25px;
     font-size: 1rem;
     border: none;
@@ -83,62 +82,63 @@
     cursor: pointer;
   }
 
-  .primary {
+  .yes {
     background: #ff4d6d;
     color: #fff;
   }
 
-  .secondary {
+  .no {
     background: #ccc;
     color: #333;
+  }
+
+  .primary {
+    background: #ff4d6d;
+    color: #fff;
   }
 </style>
 </head>
 
 <body>
 
-<!-- GREETING SCREEN -->
-<div id="greeting" class="screen active">
+<!-- GREETING PAGE -->
+<div id="greeting" class="overlay">
   <h1>Hi Londiwe ❤️</h1>
   <p>I made something small and fun for you.</p>
-  <p>I hope it brings a smile to your face.</p>
+  <p>I hope it makes you smile.</p>
   <button class="primary" onclick="showInstructions()">Next</button>
 </div>
 
-<!-- INSTRUCTIONS SCREEN -->
-<div id="instructions" class="screen">
+<!-- INSTRUCTIONS PAGE -->
+<div id="instructions" class="overlay" style="display:none;">
   <h1>How to play 💖</h1>
   <p>Move your finger left and right.</p>
   <p>Catch the falling hearts.</p>
-  <p>Catch 7 hearts to finish the game.</p>
+  <p>Catch 7 hearts to finish.</p>
   <button class="primary" onclick="startGame()">Start game</button>
 </div>
 
-<!-- GAME SCREEN -->
-<div id="game" class="screen">
-  <h1>Catch the hearts 💖</h1>
-  <div id="score">Hearts: 0 / 7</div>
+<!-- GAME -->
+<h1>Catch the hearts 💖</h1>
+<div id="score">Hearts: 0 / 7</div>
 
-  <div id="gameArea">
-    <div id="basket">💝</div>
-  </div>
+<div id="gameArea">
+  <div id="basket">💝</div>
 </div>
 
-<!-- END SCREEN -->
 <div id="endScreen">
   <h2>Londiwe…</h2>
   <p>I enjoyed making this for you.</p>
   <p>Now I have a question for you...</p>
   <p>Will you be my Valentine? ❤️</p>
 
-  <button class="primary" onclick="answerYes()">Yes</button>
-  <button class="secondary" onclick="answerNo()">No</button>
+  <button class="yes" onclick="answerYes()">Yes</button>
+  <button class="no" onclick="answerNo()">No</button>
 </div>
 
 <script>
   const greeting = document.getElementById("greeting");
   const instructions = document.getElementById("instructions");
-  const gameScreen = document.getElementById("game");
 
   const gameArea = document.getElementById("gameArea");
   const basket = document.getElementById("basket");
@@ -151,16 +151,16 @@
   let spawnLoop;
 
   function showInstructions() {
-    greeting.classList.remove("active");
-    instructions.classList.add("active");
+    greeting.style.display = "none";
+    instructions.style.display = "flex";
   }
 
   function startGame() {
-    instructions.classList.remove("active");
-    gameScreen.classList.add("active");
+    instructions.style.display = "none";
     spawnLoop = setInterval(dropHeart, 900);
   }
 
+  // Touch movement
   document.addEventListener("touchmove", e => {
     basketX = e.touches[0].clientX;
     basket.style.left = basketX + "px";
