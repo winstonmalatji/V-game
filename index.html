@@ -71,11 +71,17 @@
     justify-content: center;
     align-items: center;
     font-weight: bold;
+    text-align: center;
   }
 
   #endScreen h2 {
-    font-size: 1.8rem;
+    font-size: 2rem;
     margin-bottom: 20px;
+  }
+
+  #endScreen p {
+    font-size: 1.2rem;
+    margin: 5px 0;
   }
 
   button {
@@ -131,12 +137,11 @@
   <div id="basket">💝</div>
 </div>
 
+<!-- END SCREEN -->
 <div id="endScreen">
-  <h2>Londiwe…</h2>
-  <p>I enjoyed making this for you and I hope you had fun playing it.</p>
-  <p>Now I have a question for you...</p>
-  <p>Will you be my Valentine? ❤️</p>
-
+  <h2 id="endTitle">Londiwe…</h2>
+  <p id="endMessage">I enjoyed making this for you.</p>
+  <p id="endQuestion">Will you be my Valentine? ❤️</p>
   <button class="yes" onclick="answerYes()">Yes</button>
   <button class="no" onclick="answerNo()">No</button>
 </div>
@@ -149,6 +154,9 @@
   const basket = document.getElementById("basket");
   const scoreText = document.getElementById("score");
   const endScreen = document.getElementById("endScreen");
+  const endTitle = document.getElementById("endTitle");
+  const endMessage = document.getElementById("endMessage");
+  const endQuestion = document.getElementById("endQuestion");
 
   let basketX = window.innerWidth / 2;
   let score = 0;
@@ -218,22 +226,18 @@
   }
 
   function answerYes() {
-    endScreen.innerHTML = `
-      <h2>❤️</h2>
-      <p>You just made my day.</p>
-      <p>Happy Valentine’s Day, Londiwe.</p>
-    `;
-    endScreen.style.display = "flex"; // keep centered
+    endTitle.textContent = "❤️";
+    endMessage.textContent = "You just made my day.";
+    endQuestion.textContent = "Happy Valentine’s Day, Londiwe.";
+    endScreen.style.display = "flex";
     launchConfetti();
   }
 
   function answerNo() {
-    endScreen.innerHTML = `
-      <h2>🌸</h2>
-      <p>Thank you for playing.</p>
-      <p>I still appreciate you.</p>
-    `;
-    endScreen.style.display = "flex"; // keep centered
+    endTitle.textContent = "🌸";
+    endMessage.textContent = "Thank you for playing.";
+    endQuestion.textContent = "I still appreciate you.";
+    endScreen.style.display = "flex";
   }
 
   // Confetti hearts function
