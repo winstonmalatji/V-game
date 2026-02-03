@@ -6,102 +6,100 @@
 <title>For Londiwe ❤️</title>
 
 <style>
-  :root {
-    /* Handles the address bar on mobile browsers */
-    --vh: 100vh; 
-  }
-
   body {
     margin: 0;
     font-family: system-ui, -apple-system, sans-serif;
-    background: linear-gradient(180deg, #ff9a9e, #fad0c4);
-    text-align: center;
-    color: #fff;
-    
-    /* CRITICAL MOBILE STYLES */
-    overflow: hidden; /* No scrolling */
-    touch-action: none; /* Disables browser gestures like swipe-back or zoom */
-    overscroll-behavior: none; /* Disables pull-to-refresh */
-    -webkit-user-select: none; /* Safari: prevents text highlighting */
-    user-select: none; /* Standard: prevents text highlighting */
-    -webkit-tap-highlight-color: transparent; /* Removes gray tap box */
-    
-    /* Full height handling */
-    height: 100vh;
-    height: 100dvh; /* Dynamic viewport height for modern phones */
+    background: #ff9a9e; /* Fallback color */
+    overflow: hidden;
+    touch-action: none; /* Prevents scroll/zoom on mobile */
+    -webkit-user-select: none;
+    user-select: none;
     width: 100vw;
+    height: 100vh;
+    height: 100dvh; /* Mobile viewport fix */
   }
 
-  .overlay {
+  /* --- SCREEN MANAGEMENT --- */
+  /* By default, all screens are hidden. We show them one by one via JS. */
+  .screen {
     position: fixed;
     inset: 0;
-    background: linear-gradient(180deg, #ff9a9e, #fad0c4);
-    display: flex;
+    width: 100%;
+    height: 100%;
+    display: none; /* HIDDEN BY DEFAULT */
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    background: linear-gradient(180deg, #ff9a9e, #fad0c4);
     z-index: 10;
+    padding: 20px;
+    box-sizing: border-box;
   }
 
-  /* Typography tuned for mobile readability */
+  /* We need a specific class to make a screen visible */
+  .visible-flex {
+    display: flex !important;
+  }
+  
+  .visible-block {
+    display: block !important;
+  }
+
+  /* --- TYPOGRAPHY --- */
   h1 {
     font-size: 2rem;
-    margin: 0 0 15px 0;
+    margin-bottom: 20px;
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    color: #fff;
   }
 
   p {
     font-size: 1.2rem;
+    color: #fff;
+    margin: 10px 0;
     line-height: 1.5;
-    margin: 5px 0;
     max-width: 90%;
   }
 
-  /* Game Area */
+  /* --- GAME ASSETS --- */
   #gameAreaWrapper {
-    display: none;
-    width: 100%;
-    height: 100%;
-    position: relative;
+    /* The game wrapper is a screen too, but needs display:block for positioning */
+    background: linear-gradient(180deg, #ff9a9e, #fad0c4);
   }
 
   #score {
     position: absolute;
-    top: max(20px, env(safe-area-inset-top)); /* Respects the Notch */
+    top: max(20px, env(safe-area-inset-top));
     left: 0;
     width: 100%;
+    text-align: center;
     font-size: 1.5rem;
     font-weight: bold;
+    color: #fff;
     z-index: 5;
   }
 
   #basket {
     position: absolute;
-    bottom: max(30px, env(safe-area-inset-bottom)); /* Respects the bottom swipe bar */
+    bottom: max(30px, env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%);
-    font-size: 4.5rem; /* Large enough for thumbs */
+    font-size: 4.5rem;
     line-height: 1;
+    z-index: 5;
   }
 
   .heart {
     position: absolute;
     top: -50px;
     font-size: 2.5rem;
+    z-index: 4;
   }
 
-  /* End Screen */
+  /* --- END SCREEN SPECIFICS --- */
   #endScreen {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.9);
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    z-index: 20;
+    background: rgba(0,0,0,0.9); /* Dark overlay */
+    z-index: 100; /* Ensure it sits on top of everything */
   }
 
   #endScreen h2 {
@@ -110,178 +108,200 @@
     margin-bottom: 20px;
   }
 
-  /* Buttons */
+  /* --- BUTTONS --- */
   button {
-    margin-top: 20px;
-    padding: 15px 40px; /* Large touch target */
+    margin-top: 25px;
+    padding: 15px 40px;
     font-size: 1.2rem;
     border: none;
     border-radius: 50px;
     font-weight: bold;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    transition: transform 0.1s;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
-
-  button:active {
-    transform: scale(0.95);
-  }
+  
+  button:active { transform: scale(0.95); }
 
   .primary { background: #fff; color: #ff9a9e; }
   .yes { background: #ff4d6d; color: #fff; margin: 10px; }
   .no { background: #fff; color: #333; margin: 10px; }
+  
+  .btn-group { display: flex; gap: 10px; }
 
 </style>
 </head>
 <body>
 
-<div id="greeting" class="overlay">
+<div id="screen-greeting" class="screen visible-flex">
   <h1>Hi Londiwe ❤️</h1>
-  <p>I made a little game for you.</p>
-  <button class="primary" onclick="showInstructions()">Next</button>
+  <p>I made a little game just for you.</p>
+  <button class="primary" onclick="goToInstructions()">Next</button>
 </div>
 
-<div id="instructions" class="overlay" style="display:none;">
+<div id="screen-instructions" class="screen">
   <h1>How to play</h1>
-  <p>Drag your finger left and right.</p>
-  <p>Catch 7 hearts.</p>
-  <button class="primary" onclick="startGame()">Start</button>
+  <p>1. Drag your finger left & right.</p>
+  <p>2. Catch the falling hearts.</p>
+  <p>3. Collect 7 hearts to win.</p>
+  <button class="primary" onclick="goToGame()">Start</button>
 </div>
 
-<div id="gameAreaWrapper">
+<div id="screen-game" class="screen" style="display: none;">
   <div id="score">0 / 7</div>
   <div id="basket">💝</div>
 </div>
 
-<div id="endScreen">
+<div id="screen-end" class="screen">
   <h2 id="endTitle">Londiwe...</h2>
   <p id="endMessage">I loved making this for you.</p>
   <p id="endQuestion">Will you be my Valentine? ❤️</p>
-  <div id="buttons">
+  <div class="btn-group" id="finalButtons">
     <button class="yes" onclick="answerYes()">YES</button>
     <button class="no" onclick="answerNo()">NO</button>
   </div>
 </div>
 
 <script>
-  // Elements
-  const greeting = document.getElementById("greeting");
-  const instructions = document.getElementById("instructions");
-  const gameAreaWrapper = document.getElementById("gameAreaWrapper");
-  const basket = document.getElementById("basket");
-  const scoreText = document.getElementById("score");
-  const endScreen = document.getElementById("endScreen");
-  const endTitle = document.getElementById("endTitle");
-  const endMessage = document.getElementById("endMessage");
-  const endQuestion = document.getElementById("endQuestion");
-  const buttonsDiv = document.getElementById("buttons");
-
-  // State
+  // --- VARIABLES ---
   let score = 0;
   const target = 7;
   let spawnLoop;
   let activeHearts = [];
+  const basket = document.getElementById("basket");
+  const scoreText = document.getElementById("score");
 
-  // --- FLOW ---
-  function showInstructions() {
-    greeting.style.display = "none";
-    instructions.style.display = "flex";
+  // --- SCREEN MANAGER SYSTEM ---
+  // This function guarantees only ONE screen is open at a time
+  function switchScreen(screenId, displayType = 'flex') {
+    // 1. Hide ALL screens
+    document.querySelectorAll('.screen').forEach(s => {
+      s.classList.remove('visible-flex');
+      s.classList.remove('visible-block');
+      s.style.display = 'none'; // Force hide
+    });
+
+    // 2. Show the TARGET screen
+    const targetScreen = document.getElementById(screenId);
+    if (displayType === 'flex') {
+      targetScreen.classList.add('visible-flex');
+    } else {
+      targetScreen.classList.add('visible-block');
+    }
   }
 
-  function startGame() {
-    instructions.style.display = "none";
-    gameAreaWrapper.style.display = "block";
-    spawnLoop = setInterval(dropHeart, 800);
+  // --- NAVIGATION FUNCTIONS ---
+  function goToInstructions() {
+    switchScreen('screen-instructions');
   }
 
-  // --- TOUCH CONTROLS ---
-  // We use 'passive: false' to allow us to preventDefault()
+  function goToGame() {
+    switchScreen('screen-game', 'block'); // Game needs 'block' positioning
+    startGameLogic();
+  }
+
+  function goToEnd() {
+    // Clean up game before showing end screen
+    clearInterval(spawnLoop);
+    activeHearts.forEach(h => {
+        h.element.remove();
+        clearInterval(h.interval);
+    });
+    activeHearts = [];
+    
+    switchScreen('screen-end');
+  }
+
+  // --- GAME LOGIC ---
+  function startGameLogic() {
+    score = 0;
+    scoreText.textContent = "0 / 7";
+    
+    // Start Spawning Hearts
+    spawnLoop = setInterval(createHeart, 800);
+  }
+
+  // Touch Controls
   document.addEventListener("touchmove", function(e) {
-    e.preventDefault(); // STOPS SCROLLING / REFRESH
+    // Only move basket if the game screen is actually visible
+    if(document.getElementById('screen-game').style.display === 'none') return;
+
+    e.preventDefault(); 
     let touch = e.touches[0];
     let x = touch.clientX;
     
-    // Bounds check
     if(x < 0) x = 0;
     if(x > window.innerWidth) x = window.innerWidth;
     
     basket.style.left = x + "px";
   }, { passive: false });
 
-  // --- GAME LOOP ---
-  function dropHeart() {
+  // Mouse Controls (Just in case)
+  document.addEventListener("mousemove", function(e) {
+    if(document.getElementById('screen-game').style.display === 'none') return;
+    basket.style.left = e.clientX + "px";
+  });
+
+  function createHeart() {
     const heart = document.createElement("div");
     heart.className = "heart";
     heart.textContent = "❤️";
-    // Ensure hearts don't spawn too close to edge
-    heart.style.left = Math.random() * (window.innerWidth - 50) + "px"; 
-    gameAreaWrapper.appendChild(heart);
+    heart.style.left = Math.random() * (window.innerWidth - 50) + "px";
+    document.getElementById('screen-game').appendChild(heart);
 
     let y = -50;
-    // Speed is slightly random
-    const speed = 4 + Math.random() * 3; 
+    const speed = 4 + Math.random() * 3;
 
     const fall = setInterval(() => {
       y += speed;
       heart.style.top = y + "px";
 
+      // Collision
       const hRect = heart.getBoundingClientRect();
       const bRect = basket.getBoundingClientRect();
 
-      // Simple collision box
       if (
-        hRect.bottom > bRect.top + 20 && // +20 allows heart to go slightly into basket
+        hRect.bottom > bRect.top + 15 &&
         hRect.top < bRect.bottom &&
         hRect.right > bRect.left &&
         hRect.left < bRect.right
       ) {
         score++;
         scoreText.textContent = `${score} / ${target}`;
-        cleanUpHeart(heart, fall);
-
-        if (score >= target) endGame();
+        
+        // Remove heart
+        heart.remove();
+        clearInterval(fall);
+        
+        if (score >= target) {
+          goToEnd();
+        }
       }
 
+      // Missed heart
       if (y > window.innerHeight) {
-        cleanUpHeart(heart, fall);
+        heart.remove();
+        clearInterval(fall);
       }
     }, 16);
-    
+
     activeHearts.push({ element: heart, interval: fall });
   }
 
-  function cleanUpHeart(heart, interval) {
-    heart.remove();
-    clearInterval(interval);
-    // Remove from tracking array
-    activeHearts = activeHearts.filter(h => h.interval !== interval);
-  }
-
-  function endGame() {
-    clearInterval(spawnLoop);
-    // Clear all currently falling hearts
-    activeHearts.forEach(h => {
-      h.element.remove();
-      clearInterval(h.interval);
-    });
-    activeHearts = [];
-    
-    endScreen.style.display = "flex";
-  }
-
-  // --- RESPONSE ---
+  // --- FINAL ANSWER ---
   function answerYes() {
-    endTitle.textContent = "Yay! ❤️";
-    endMessage.textContent = "You just made my day.";
-    endQuestion.textContent = "Happy Valentine’s Day!";
-    buttonsDiv.style.display = "none";
+    document.getElementById('endTitle').textContent = "Yay! ❤️";
+    document.getElementById('endMessage').textContent = "You just made my day.";
+    document.getElementById('endQuestion').textContent = "Happy Valentine’s Day!";
+    document.getElementById('finalButtons').style.display = 'none';
     launchConfetti();
   }
 
   function answerNo() {
-    endTitle.textContent = "Okay 🌸";
-    endMessage.textContent = "Thanks for playing anyway.";
-    endQuestion.textContent = "You're still awesome.";
-    buttonsDiv.style.display = "none";
+    document.getElementById('endTitle').textContent = "Okay 🌸";
+    document.getElementById('endMessage').textContent = "Thanks for playing anyway.";
+    document.getElementById('endQuestion').textContent = "You're still awesome.";
+    document.getElementById('finalButtons').style.display = 'none';
   }
 
   function launchConfetti() {
@@ -292,12 +312,11 @@
       c.style.left = Math.random() * 100 + "vw";
       c.style.top = "-20px";
       c.style.fontSize = (Math.random() * 20 + 20) + "px";
-      c.style.zIndex = "30";
+      c.style.zIndex = "200";
       document.body.appendChild(c);
 
       let y = -20;
       const speed = 3 + Math.random() * 4;
-      
       const fall = setInterval(() => {
         y += speed;
         c.style.top = y + "px";
